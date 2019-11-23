@@ -1,10 +1,10 @@
 var msg = { "openGui" : true, "playerInvSize": 40, "playerinv" : [
-	{"id" : 1, "name" : "Pepega", "amount" : 5, "slot" : 1, "use" : null, "stack" : true},
-	{"id" : 2, "name" : "KEKW", "amount" : 125, "slot" : 2, "use" : null, "stack" : true},
-	{"id" : 3, "name" : "LULW", "amount" : 5, "slot" : 3, "use" : null, "stack" : true},
-	{"id" : 5, "name" : "Twitch Chat", "amount" : 1, "slot" : 4, "use" : null, "stack" : false},
-	{"id" : 5, "name" : "Twitch Chat", "amount" : 1, "slot" : 5, "use" : null, "stack" : false}],
-	"otherInvSize": 5, "otherInv": []
+    {"id" : 1, "name" : "Pepega", "amount" : 25, "slot" : 1, "use" : null, "stack" : true},
+    {"id" : 2, "name" : "KEKW", "amount" : 125, "slot" : 2, "use" : null, "stack" : true},
+    {"id" : 3, "name" : "LULW", "amount" : 5, "slot" : 3, "use" : null, "stack" : true},
+    {"id" : 5, "name" : "Twitch Chat", "amount" : 1, "slot" : 4, "use" : null, "stack" : false},
+    {"id" : 5, "name" : "Twitch Chat", "amount" : 1, "slot" : 6, "use" : null, "stack" : false, "desc": "This is a really long description, I hope it works for you smile. If it doesn't, then get good smile :)"}],
+    "otherInvSize": 5
 };
 RegisterCommand('inventory', function(){
 	SetNuiFocus(true, true);

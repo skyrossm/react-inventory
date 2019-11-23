@@ -46,23 +46,32 @@ class InventoryContainer extends React.Component {
   		
   		if(guiOpen){
 			//Create child components
-			if(playerInvSize != 0){
+			if(playerInvSize > 5){
 				player = <Inventory invName="player" invSize={playerInvSize} items={playerItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
+			}else {
+				player = null;
 			}
-			if(otherInvSize != 0){
+			if(otherInvSize > 5){
 				other = <Inventory invName="other" invSize={otherInvSize} items={otherItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
+			}else {
+				other = null;
 			}
 			classes = "container";
   		}else {
   			//Hide child components/remove them
   			player = null;
   			other = null;
-  			classes = "";
+  			classes = "hidden";
   		}
 		return(
 			<div className={classes}>
 				{player}
 				{other}
+				<div id="desc">
+					<div className="desc-title"></div>
+					<hr className="divider" />
+					<span className="desc-content"></span>
+				</div>
 			</div>
 		);
 	}
@@ -540,6 +549,8 @@ class Item extends React.Component {
     	super(props);
 		this.clickHandler = this.clickHandler.bind(this);
 		this.props.clickItem.bind(this);
+		this.mouseEnterHandler = this.mouseEnterHandler.bind(this);
+		this.mouseOutHandler = this.mouseOutHandler.bind(this);
   	}
 
   	render() {
@@ -548,12 +559,9 @@ class Item extends React.Component {
 		let itemName = this.props.itemValues.name;
 		let itemAmount = this.props.itemValues.amount;
 		let itemImage = this.props.itemValues.image;
-		let itemSplit = this.props.itemValues.split;
-		if(itemSplit){
-			//uid += "[1]";
-		}
+
   		return (
-  			<div className="item" id={uid} data-itemid={itemId} onMouseDown={this.clickHandler}>
+  			<div className="item" id={uid} data-itemid={itemId} onMouseDown={this.clickHandler} onMouseEnter={this.mouseEnterHandler} onMouseLeave={this.mouseOutHandler}>
 				<span className="item-name">{itemName}</span>
 				<div className="item-amount">{itemAmount}</div>
   			</div>
@@ -562,6 +570,24 @@ class Item extends React.Component {
 
   	clickHandler(e) {
   		this.props.clickItem(e, this.props.uid);
+  	}
+
+  	mouseEnterHandler(e) {
+  		let itemName = this.props.itemValues.name;
+  		let itemDesc = this.props.itemValues.desc;
+  		$("#desc .desc-title").text(itemName);
+  		$("#desc .desc-content").text(itemDesc);
+  		$("#desc .divider").show();
+  		if(e.relatedTarget != null){
+  			if(!$(e.relatedTarget).hasClass("item")){
+				$("#desc").fadeIn(2000);
+  			}
+  		}
+  	}
+  	mouseOutHandler(e) {
+  		$("#desc .desc-content").text("");
+  		$("#desc .desc-title").text("");
+  		$("#desc .divider").hide();
   	}
 }
 

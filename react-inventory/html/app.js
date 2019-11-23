@@ -65,24 +65,35 @@ var InventoryContainer = function (_React$Component) {
 
 			if (guiOpen) {
 				//Create child components
-				if (playerInvSize != 0) {
+				if (playerInvSize > 5) {
 					player = React.createElement(Inventory, { invName: "player", invSize: playerInvSize, items: playerItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
+				} else {
+					player = null;
 				}
-				if (otherInvSize != 0) {
+				if (otherInvSize > 5) {
 					other = React.createElement(Inventory, { invName: "other", invSize: otherInvSize, items: otherItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
+				} else {
+					other = null;
 				}
 				classes = "container";
 			} else {
 				//Hide child components/remove them
 				player = null;
 				other = null;
-				classes = "";
+				classes = "hidden";
 			}
 			return React.createElement(
 				"div",
 				{ className: classes },
 				player,
-				other
+				other,
+				React.createElement(
+					"div",
+					{ id: "desc" },
+					React.createElement("div", { className: "desc-title" }),
+					React.createElement("hr", { className: "divider" }),
+					React.createElement("span", { className: "desc-content" })
+				)
 			);
 		}
 	}, {
@@ -188,7 +199,7 @@ var InventoryContainer = function (_React$Component) {
 						if (this.shiftPressed) {
 							var slot;
 
-							//get availble slot in opposite inventory
+							//get Available slot in opposite inventory
 							var opposite, inv;
 							if (invName == "player") {
 								opposite = "other";
@@ -202,7 +213,7 @@ var InventoryContainer = function (_React$Component) {
 							if (instance != null) {
 								slotNum = instance.slot - 1;
 							} else {
-								slotNum = this.findFirstAvailbleSlotInInv(opposite);
+								slotNum = this.findFirstAvailableSlotInInv(opposite);
 							}
 							if (slotNum != null) {
 								slot = getSlotIdFromNum(slotNum, opposite);
@@ -261,7 +272,7 @@ var InventoryContainer = function (_React$Component) {
 								newElement.amount = halfAmount;
 
 								//find closest spot in inventory to place right click stack in case of failure
-								var newSlot = this.findFirstAvailbleSlotInInv(invName);
+								var newSlot = this.findFirstAvailableSlotInInv(invName);
 								if (newSlot != null) {
 									newElement.slot = newSlot + 1;
 								} else {
@@ -431,8 +442,8 @@ var InventoryContainer = function (_React$Component) {
 			this.dragItem.css("left", mouseX - 50);
 		}
 	}, {
-		key: "findFirstAvailbleSlotInInv",
-		value: function findFirstAvailbleSlotInInv(invName) {
+		key: "findFirstAvailableSlotInInv",
+		value: function findFirstAvailableSlotInInv(invName) {
 			var invSize, inv;
 			if (invName == "player") {
 				invSize = this.state.playerInvSize;
@@ -621,6 +632,8 @@ var Item = function (_React$Component3) {
 
 		_this4.clickHandler = _this4.clickHandler.bind(_this4);
 		_this4.props.clickItem.bind(_this4);
+		_this4.mouseEnterHandler = _this4.mouseEnterHandler.bind(_this4);
+		_this4.mouseOutHandler = _this4.mouseOutHandler.bind(_this4);
 		return _this4;
 	}
 
@@ -632,13 +645,10 @@ var Item = function (_React$Component3) {
 			var itemName = this.props.itemValues.name;
 			var itemAmount = this.props.itemValues.amount;
 			var itemImage = this.props.itemValues.image;
-			var itemSplit = this.props.itemValues.split;
-			if (itemSplit) {
-				//uid += "[1]";
-			}
+
 			return React.createElement(
 				"div",
-				{ className: "item", id: uid, "data-itemid": itemId, onMouseDown: this.clickHandler },
+				{ className: "item", id: uid, "data-itemid": itemId, onMouseDown: this.clickHandler, onMouseEnter: this.mouseEnterHandler, onMouseLeave: this.mouseOutHandler },
 				React.createElement(
 					"span",
 					{ className: "item-name" },
@@ -655,6 +665,27 @@ var Item = function (_React$Component3) {
 		key: "clickHandler",
 		value: function clickHandler(e) {
 			this.props.clickItem(e, this.props.uid);
+		}
+	}, {
+		key: "mouseEnterHandler",
+		value: function mouseEnterHandler(e) {
+			var itemName = this.props.itemValues.name;
+			var itemDesc = this.props.itemValues.desc;
+			$("#desc .desc-title").text(itemName);
+			$("#desc .desc-content").text(itemDesc);
+			$("#desc .divider").show();
+			if (e.relatedTarget != null) {
+				if (!$(e.relatedTarget).hasClass("item")) {
+					$("#desc").fadeIn(2000);
+				}
+			}
+		}
+	}, {
+		key: "mouseOutHandler",
+		value: function mouseOutHandler(e) {
+			$("#desc .desc-content").text("");
+			$("#desc .desc-title").text("");
+			$("#desc .divider").hide();
 		}
 	}]);
 
