@@ -1,0 +1,92 @@
+* {
+	box-sizing: content-box;
+	user-select: none;
+}
+
+body {
+    margin: 0;
+}
+
+.container {
+	background-color: rgba(0,0,0,0.6);
+	font-family: "Open Sans"; font-size:14pt;
+	width: 100%;
+	height: 100%;
+}
+
+.inventory {
+	position: absolute;
+	top: 15%;
+}
+
+.player {
+	left: 14%;
+}
+
+.other {
+	left: 57%;
+}
+
+.title {
+	position: relative;
+	bottom: 40px;
+	color: white;
+	text-shadow: 0px 1px 6px #000;
+	margin: 0;
+}
+
+.slots {
+	position: relative;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	bottom: 38px;
+	max-height: 532px;
+	scrollbar-color: rgba(50,50,50,0.8) rgba(50,50,50,0.6);
+	background-color:rgba(50,50,50,0.6);
+	display: block;
+}
+
+.slot {
+	display: inline-block;
+	width: 100px;
+	height: 100px;
+	border: 1px solid #000;
+	left: 0px;
+	vertical-align:top;
+}
+
+.item {
+	text-align: center;
+	background-color: rgba(0,0,0,0.2);
+	width: 100px;
+	height: 100px;
+	z-index: 1000;
+}
+
+.item-name {
+	color: white;
+}
+
+.item-image {
+	width: 100%;
+	height: 80%;
+}
+
+.item-amount {
+	font-size: 12pt;
+	color: grey;
+}
+
+.stop-clicks {
+	pointer-events: none;
+}
+
+::-webkit-scrollbar {
+	background-color: rgba(50,50,50,0.2);
+}
+::-webkit-scrollbar-thumb {
+	background-color: rgba(20,20,20,0.5);
+}
+::-webkit-scrollbar-button {
+	display: none;
+}
