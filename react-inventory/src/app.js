@@ -46,12 +46,12 @@ class InventoryContainer extends React.Component {
   		
   		if(guiOpen){
 			//Create child components
-			if(playerInvSize > 5){
+			if(playerInvSize >= 5){
 				player = <Inventory invName="player" invSize={playerInvSize} items={playerItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
 			}else {
 				player = null;
 			}
-			if(otherInvSize > 5){
+			if(otherInvSize >= 5){
 				other = <Inventory invName="other" invSize={otherInvSize} items={otherItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
 			}else {
 				other = null;
