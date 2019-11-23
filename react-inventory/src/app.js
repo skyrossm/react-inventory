@@ -160,7 +160,7 @@ class InventoryContainer extends React.Component {
 					if(this.shiftPressed){
 						var slot;
 
-						//get availble slot in opposite inventory
+						//get Available slot in opposite inventory
 						var opposite, inv;
 						if(invName == "player"){
 							opposite = "other";
@@ -174,7 +174,7 @@ class InventoryContainer extends React.Component {
 						if(instance != null){
 							slotNum = instance.slot - 1;
 						}else {
-							slotNum =  this.findFirstAvailbleSlotInInv(opposite);
+							slotNum =  this.findFirstAvailableSlotInInv(opposite);
 						}
 						if(slotNum != null){
 							slot = getSlotIdFromNum(slotNum, opposite);
@@ -233,7 +233,7 @@ class InventoryContainer extends React.Component {
 							newElement.amount = halfAmount;
 
 							//find closest spot in inventory to place right click stack in case of failure
-							var newSlot = this.findFirstAvailbleSlotInInv(invName);
+							var newSlot = this.findFirstAvailableSlotInInv(invName);
 							if(newSlot != null){
 								newElement.slot =  newSlot + 1;
 							}else {
@@ -403,7 +403,7 @@ class InventoryContainer extends React.Component {
 		this.dragItem.css("left", mouseX - 50);
 	}
 
-	findFirstAvailbleSlotInInv(invName) {
+	findFirstAvailableSlotInInv(invName) {
 		var invSize, inv;
 		if(invName == "player"){
 			invSize = this.state.playerInvSize;
