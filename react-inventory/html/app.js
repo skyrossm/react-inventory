@@ -174,7 +174,91 @@ var InventoryContainer = function (_React$Component) {
 						break;
 					case 3:
 						//Place one item unless amount = 1
+						var item = this.dragItem;
+						if (Number(item.find(".item-amount").text()) <= 1) {
+							//Itemstack is already delpleted, stop placing and return back to original spot ?
+							//this.toSlot = this.fromSlot;
+							this.stopDragging();
+						} else {
+							if (this.toSlot == null || this.fromSlot == null || this.didSplit) {
+								this.didSplit = false;
+								break;
+							}
+							//find which inventory we're placing in
+							var toInvName = this.toSlot.attr("id").split("slot")[0];
+							var fromInvName = this.fromSlot.attr("id").split("slot")[0];
 
+							if (toInvName == "player") {
+								toinv = this.state.playerinv.slice();
+							} else {
+								toinv = this.state.otherinv.slice();
+							}
+							if (fromInvName == "player") {
+								frominv = this.state.playerinv.slice();
+							} else {
+								frominv = this.state.otherinv.slice();
+							}
+
+							//get the slot of the new item
+							var slot = getSlotNumFromId(this.toSlot.attr("id")) + 1;
+
+							//get the slot element
+							var slotElement = toinv.find(function (e) {
+								return e.slot == slot;
+							});
+
+							var fslot = getSlotNumFromId(this.dragItem.attr("id")) + 1;
+
+							//get the slot element
+							var fSlotElement = frominv.find(function (e) {
+								return e.slot == fslot;
+							});
+
+							//if there is an element is found
+							if (fSlotElement != undefined) {
+								//Check item ids and stackable, if they are then add one to the slot and remove one from drag
+								if (slotElement != undefined) {
+									if (fslot != slot && slotElement.id == this.dragItem.data("itemid")) {
+										toinv.splice(toinv.indexOf(slotElement), 1);
+										//frominv.splice(frominv.indexOf(fSlotElement), 1);
+										//fSlotElement.amount -= 1;
+										slotElement.amount += 1;
+									} else {
+										break;
+									}
+								} else {
+									var slotElement = JSON.parse(JSON.stringify(fSlotElement));
+									slotElement.slot = slot;
+									slotElement.amount = 1;
+									fSlotElement.amount -= 1;
+								}
+								//this.toSlot.find(".item-amount").text(slotElement.amount);
+								//this.fromSlot.find(".item-amount").text(fSlotElement.amount);
+
+								frominv.push(fSlotElement);
+								toinv.push(slotElement);
+
+								var updateArray = {};
+
+								if (toInvName == "player") {
+									//update playerinv
+									updateArray["playerinv"] = toinv;
+								} else {
+									//update otherinv
+									updateArray["otherinv"] = toinv;
+								}
+								if (toInvName != fromInvName) {
+									if (fromInvName == "player") {
+										updateArray["playerinv"] = frominv;
+									} else {
+										updateArray["otherinv"] = frominv;
+									}
+								} else {
+									toinv[toinv.indexOf(fSlotElement)].amount = fSlotElement.amount;
+								}
+								this.setState(updateArray);
+							} else {}
+						}
 						break;
 					default:
 						console.log("oops");break;
@@ -260,6 +344,8 @@ var InventoryContainer = function (_React$Component) {
 
 							//if the element is found
 							if (slotElement != undefined) {
+
+								this.didSplit = true;
 								//duplicate the element
 								var newElement = JSON.parse(JSON.stringify(slotElement));
 
