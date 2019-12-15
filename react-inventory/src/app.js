@@ -709,7 +709,7 @@ class Item extends React.Component {
 		let itemAmount = this.props.itemValues.amount;
 		let itemImage = this.props.itemValues.image;
 
-		let imgSrc = "img/" + itemName +".gif";
+		let imgSrc = "img/items/" + itemName.toLowerCase() +".gif";
 
   		return (
   			<div className="item" id={uid} data-itemid={itemId} onMouseDown={this.clickHandler} onMouseEnter={this.mouseEnterHandler} onMouseLeave={this.mouseOutHandler}>

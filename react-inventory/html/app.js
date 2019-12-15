@@ -794,7 +794,7 @@ var Item = function (_React$Component3) {
 			var itemAmount = this.props.itemValues.amount;
 			var itemImage = this.props.itemValues.image;
 
-			var imgSrc = "img/" + itemName + ".gif";
+			var imgSrc = "img/items/" + itemName.toLowerCase() + ".gif";
 
 			return React.createElement(
 				"div",

@@ -10,5 +10,7 @@ files {
 	'html/app.js',
 	'html/main.css',
 	'html/react-dom.development.js',
-	'html/react.development.js'
+	'html/react.development.js',
+	'html/img/items/*.png',
+	'html/img/items/*.gif'
 }

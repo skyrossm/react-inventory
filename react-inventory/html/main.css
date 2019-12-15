@@ -17,7 +17,6 @@ body {
 
 .container {
 	display: flex;
-	grid-column-gap: 75px;
 	margin-top:10%;
 	justify-content: center;
 }
@@ -151,6 +150,8 @@ body {
 
 #functions {
     user-select: auto;
+	margin-left: 75px;
+	margin-right: 75px;
 }
 
 
