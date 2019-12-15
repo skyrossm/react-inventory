@@ -136,7 +136,7 @@ var InventoryContainer = function (_React$Component) {
 			}
 			if (event.data.playerinv) {
 				//Load player items from message
-				updateArray["playerinv"] = event.data.playerinv;
+				updateArray["playerinv"] = JSON.parse(event.data.playerinv);
 			}
 			if (event.data.otherInvSize) {
 				//load other inventory size
@@ -144,7 +144,7 @@ var InventoryContainer = function (_React$Component) {
 			}
 			if (event.data.otherinv) {
 				//Load other items from message
-				updateArray["otherinv"] = event.data.otherinv;
+				updateArray["otherinv"] = JSON.parse(event.data.otherinv);
 			}
 			this.setState(updateArray);
 		}
@@ -320,7 +320,7 @@ var InventoryContainer = function (_React$Component) {
 								inv = this.state.playerinv;
 							}
 							var instance = findFirstInstanceOf(item.data("itemid"), inv);
-							var slotNum;
+							var slotNum = null;
 							if (instance != null) {
 								slotNum = instance.slot - 1;
 							} else {
@@ -877,11 +877,21 @@ function getSlotIdFromNum(num, invName) {
 }
 
 function findFirstInstanceOf(itemid, inv) {
-	var ele = inv.find(function (e) {
-		return e.id == itemid;
+	var minElement = null;
+	var minSlot;
+	inv.find(function (e) {
+		if (e.id == itemid) {
+			if (minElement == null) {
+				minElement = e;
+				minSlot = e.slot;
+			} else if (e.slot <= minSlot) {
+				minElement = e;
+				minSlot = e.slot;
+			}
+		}
 	});
-	if (ele != undefined && ele.stack) {
-		return ele;
+	if (minElement != undefined && minElement.stack) {
+		return minElement;
 	}
 	return null;
 }
