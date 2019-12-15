@@ -164,3 +164,10 @@ input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
+
+@media screen and (min-width: 1919px) {
+  .item-amount, .item-name {
+     font-size: 14px;
+  }
+}

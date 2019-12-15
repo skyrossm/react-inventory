@@ -308,7 +308,7 @@ var InventoryContainer = function (_React$Component) {
 
 						//handle shift clicking items
 						if (this.shiftPressed) {
-							var slot;
+							var slot = null;
 
 							//get Available slot in opposite inventory
 							var opposite, inv;
@@ -390,9 +390,11 @@ var InventoryContainer = function (_React$Component) {
 								if (newSlot != null) {
 									newElement.slot = newSlot + 1;
 								} else {
-									//if inventory is full, set it to our current slot
-									//this is worst case, since it can cause items to be stacked on each other
-									newElement.slot = slotElement.slot;
+									//if inventory is full
+									this.dragItem = item;
+									this.fromSlot = item.parent();
+									this.startDragging(mouseX, mouseY);
+									break;
 								}
 
 								//Update old element
@@ -416,7 +418,7 @@ var InventoryContainer = function (_React$Component) {
 									//callback after render, set the new item to be dragged and set fromslot
 									var ele = inv[inv.length - 1];
 									var slotId = getSlotIdFromNum(ele.slot - 1, invName);
-									var newItem = $("#" + slotId).find(".item");
+									var newItem = $("#" + slotId).find(".item").eq(0);
 									this.dragItem = newItem;
 									this.fromSlot = newItem.parent();
 									this.startDragging(mouseX, mouseY);
@@ -517,6 +519,11 @@ var InventoryContainer = function (_React$Component) {
 					var index2 = frominv.indexOf(updateElement);
 					frominv.splice(index2, 1);
 
+					if (this.didSplit && this.fromSlot == undefined) {
+						//Did a split in a full inventory, prevent swapping
+
+					}
+
 					var swapElement = toinv.find(function (ele) {
 						return ele.slot == slotNum;
 					});
@@ -568,6 +575,7 @@ var InventoryContainer = function (_React$Component) {
 
 			this.dragItem = null;
 			this.fromSlot = null;
+			this.didSplit = false;
 			this.toSlot = null;
 		}
 	}, {
