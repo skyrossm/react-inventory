@@ -34,17 +34,22 @@ var InventoryContainer = function (_React$Component) {
 		//Bind click handlers
 		_this.clickItem = _this.clickItem.bind(_this);
 		_this.clickSlot = _this.clickSlot.bind(_this);
+		_this.amountMouseEnter = _this.amountMouseEnter.bind(_this);
+		_this.amountMouseLeave = _this.amountMouseLeave.bind(_this);
 
 		_this.stopDragging = _this.stopDragging.bind(_this);
 		_this.startDragging = _this.startDragging.bind(_this);
 
-		//Handle dragging
+		//Handle variables
 		_this.isDragging = false;
 		_this.dragItem = null;
 		_this.toSlot = null;
 		_this.fromSlot = null;
 		_this.shiftPressed = false;
 		_this.didSplit = false;
+		_this.ctrlPressed = false;
+		_this.isOverAmount = false;
+		_this.amountEdit = "";
 		return _this;
 	}
 
@@ -58,6 +63,8 @@ var InventoryContainer = function (_React$Component) {
 			var playerItems = this.state.playerinv;
 			var otherItems = this.state.otherinv;
 
+			var rowItems = 5;
+
 			//Child Components
 			var player;
 			var other;
@@ -65,17 +72,17 @@ var InventoryContainer = function (_React$Component) {
 
 			if (guiOpen) {
 				//Create child components
-				if (playerInvSize >= 5) {
-					player = React.createElement(Inventory, { invName: "player", invSize: playerInvSize, items: playerItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
+				if (playerInvSize >= rowItems) {
+					player = React.createElement(Inventory, { invName: "player", invSize: playerInvSize, itemsPerRow: rowItems, items: playerItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
 				} else {
 					player = null;
 				}
-				if (otherInvSize >= 5) {
-					other = React.createElement(Inventory, { invName: "other", invSize: otherInvSize, items: otherItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
+				if (otherInvSize >= rowItems) {
+					other = React.createElement(Inventory, { invName: "other", invSize: otherInvSize, itemsPerRow: rowItems, items: otherItems, clickItem: this.clickItem, clickSlot: this.clickSlot });
 				} else {
 					other = null;
 				}
-				classes = "container";
+				classes = "overlay";
 			} else {
 				//Hide child components/remove them
 				player = null;
@@ -85,14 +92,23 @@ var InventoryContainer = function (_React$Component) {
 			return React.createElement(
 				"div",
 				{ className: classes },
-				player,
-				other,
 				React.createElement(
 					"div",
-					{ id: "desc" },
-					React.createElement("div", { className: "desc-title" }),
-					React.createElement("hr", { className: "divider" }),
-					React.createElement("span", { className: "desc-content" })
+					{ className: "container" },
+					player,
+					React.createElement(
+						"div",
+						{ id: "functions" },
+						React.createElement("input", { type: "number", placeholder: "Amount", id: "amount", min: "0", onMouseEnter: this.amountMouseEnter, onMouseLeave: this.amountMouseLeave, onChange: this.changeAmount, onClick: this.clickAmount })
+					),
+					other,
+					React.createElement(
+						"div",
+						{ id: "desc" },
+						React.createElement("div", { className: "desc-title" }),
+						React.createElement("hr", { className: "divider" }),
+						React.createElement("span", { className: "desc-content" })
+					)
 				)
 			);
 		}
@@ -143,6 +159,9 @@ var InventoryContainer = function (_React$Component) {
 			if (e.key === "Shift") {
 				this.shiftPressed = false;
 			}
+			if (e.key === "Ctrl") {
+				this.ctrlPressed = false;
+			}
 		}
 	}, {
 		key: "handleKeyDown",
@@ -150,6 +169,18 @@ var InventoryContainer = function (_React$Component) {
 			//For shift clicking items
 			if (e.key === "Shift") {
 				this.shiftPressed = true;
+			}
+			if (e.key === "Ctrl") {
+				this.ctrlPressed = true;
+			}
+			if (this.isOverAmount) {
+				if (event.keyCode >= 48 && event.keyCode <= 57) {
+					this.amountEdit += e.key.toString();
+					$("#amount").val(this.amountEdit);
+				} else {
+					this.amountEdit = "0";
+					$("#amount").val(this.amountEdit);
+				}
 			}
 		}
 	}, {
@@ -173,92 +204,88 @@ var InventoryContainer = function (_React$Component) {
 						this.stopDragging();
 						break;
 					case 3:
-						//Place one item unless amount = 1
-						var item = this.dragItem;
-						if (Number(item.find(".item-amount").text()) <= 1) {
-							//Itemstack is already delpleted, stop placing and return back to original spot ?
-							//this.toSlot = this.fromSlot;
-							this.stopDragging();
-						} else {
-							if (this.toSlot == null || this.fromSlot == null || this.didSplit) {
-								this.didSplit = false;
-								break;
-							}
-							//find which inventory we're placing in
-							var toInvName = this.toSlot.attr("id").split("slot")[0];
-							var fromInvName = this.fromSlot.attr("id").split("slot")[0];
-
-							if (toInvName == "player") {
-								toinv = this.state.playerinv.slice();
-							} else {
-								toinv = this.state.otherinv.slice();
-							}
-							if (fromInvName == "player") {
-								frominv = this.state.playerinv.slice();
-							} else {
-								frominv = this.state.otherinv.slice();
-							}
-
-							//get the slot of the new item
-							var slot = getSlotNumFromId(this.toSlot.attr("id")) + 1;
-
-							//get the slot element
-							var slotElement = toinv.find(function (e) {
-								return e.slot == slot;
-							});
-
-							var fslot = getSlotNumFromId(this.dragItem.attr("id")) + 1;
-
-							//get the slot element
-							var fSlotElement = frominv.find(function (e) {
-								return e.slot == fslot;
-							});
-
-							//if there is an element is found
-							if (fSlotElement != undefined) {
-								//Check item ids and stackable, if they are then add one to the slot and remove one from drag
-								if (slotElement != undefined) {
-									if (fslot != slot && slotElement.id == this.dragItem.data("itemid")) {
-										toinv.splice(toinv.indexOf(slotElement), 1);
-										//frominv.splice(frominv.indexOf(fSlotElement), 1);
-										//fSlotElement.amount -= 1;
-										slotElement.amount += 1;
-									} else {
-										break;
-									}
-								} else {
-									var slotElement = JSON.parse(JSON.stringify(fSlotElement));
-									slotElement.slot = slot;
-									slotElement.amount = 1;
-									fSlotElement.amount -= 1;
-								}
-								//this.toSlot.find(".item-amount").text(slotElement.amount);
-								//this.fromSlot.find(".item-amount").text(fSlotElement.amount);
-
-								frominv.push(fSlotElement);
-								toinv.push(slotElement);
-
-								var updateArray = {};
-
-								if (toInvName == "player") {
-									//update playerinv
-									updateArray["playerinv"] = toinv;
-								} else {
-									//update otherinv
-									updateArray["otherinv"] = toinv;
-								}
-								if (toInvName != fromInvName) {
-									if (fromInvName == "player") {
-										updateArray["playerinv"] = frominv;
-									} else {
-										updateArray["otherinv"] = frominv;
-									}
-								} else {
-									toinv[toinv.indexOf(fSlotElement)].amount = fSlotElement.amount;
-								}
-								this.setState(updateArray);
-							} else {}
-						}
+						/* REMOVED FOR TIME BEING, IT'S BAD
+      //Place one item unless amount = 1
+      let item = this.dragItem;
+      if(Number(item.find(".item-amount").text()) <= 1){
+      //Itemstack is already delpleted, stop placing and return back to original spot ?
+      //this.toSlot = this.fromSlot;
+      this.stopDragging();
+      }else {
+      if(this.toSlot == null || this.fromSlot == null || this.didSplit){
+      	this.didSplit = false;
+      	break;
+      }
+      //find which inventory we're placing in
+      var toInvName = this.toSlot.attr("id").split("slot")[0];
+      var fromInvName = this.fromSlot.attr("id").split("slot")[0];
+      		if(toInvName == "player"){
+      	toinv = this.state.playerinv.slice();
+      }else {
+      	toinv = this.state.otherinv.slice();
+      }
+      if(fromInvName == "player"){
+      	frominv = this.state.playerinv.slice();
+      }else {
+      	frominv = this.state.otherinv.slice();
+      }
+      		//get the slot of the new item
+      var slot = getSlotNumFromId(this.toSlot.attr("id")) + 1;
+      		//get the slot element
+      var slotElement = toinv.find(function(e){
+      	return e.slot == slot;
+      })
+      		var fslot = getSlotNumFromId(this.dragItem.attr("id")) + 1;
+      		//get the slot element
+      var fSlotElement = frominv.find(function(e){
+      	return e.slot == fslot;
+      })
+      		//if there is an element is found
+      if(fSlotElement != undefined){
+      	//Check item ids and stackable, if they are then add one to the slot and remove one from drag
+      	if(slotElement != undefined){
+      		if(fslot != slot && slotElement.id == this.dragItem.data("itemid")){
+      			toinv.splice(toinv.indexOf(slotElement), 1);
+      			//frominv.splice(frominv.indexOf(fSlotElement), 1);
+      			//fSlotElement.amount -= 1;
+      			slotElement.amount += 1;
+      		}else {
+      			break;
+      		}
+      	}else {
+      		var slotElement = JSON.parse(JSON.stringify(fSlotElement));
+      		slotElement.slot = slot;
+      		slotElement.amount = 1;
+      		fSlotElement.amount -= 1;
+      		frominv.push(fSlotElement);
+      	}
+      	//this.toSlot.find(".item-amount").text(slotElement.amount);
+      	//this.fromSlot.find(".item-amount").text(fSlotElement.amount);
+      	
+      	
+      	toinv.push(slotElement);
+      			var updateArray = {};
+      			if(toInvName == "player") {
+      		//update playerinv
+      		updateArray["playerinv"] = toinv;
+      	}else {
+      		//update otherinv
+      		updateArray["otherinv"] = toinv;
+      	}
+      	if(toInvName != fromInvName){
+      		if(fromInvName == "player"){
+      			updateArray["playerinv"] = frominv;
+      		}else {
+      			updateArray["otherinv"] = frominv;
+      		}
+      	}else {
+      		toinv[toinv.indexOf(fSlotElement)].amount = fSlotElement.amount;
+      	}
+      	this.setState(updateArray);
+      }else {
+      }
+      	}
+      */
 						break;
 					default:
 						console.log("oops");break;
@@ -270,7 +297,7 @@ var InventoryContainer = function (_React$Component) {
 		value: function clickItem(e, uid, invName) {
 			//Handle when a user clicks on an item
 			if (!this.isDragging) {
-				var item = $("#" + CSS.escape(uid));
+				var item = $("#" + uid);
 				var mouseX = e.clientX;
 				var mouseY = e.clientY;
 				switch (e.button) {
@@ -305,7 +332,9 @@ var InventoryContainer = function (_React$Component) {
 
 							//make sure inventory is not full
 							if (slot != null) {
-								this.toSlot = $("#" + CSS.escape(slot));
+								this.toSlot = $("#" + slot);
+								//prevent sticky shift
+								this.shiftPressed = false;
 								this.stopDragging();
 							}
 						} else {
@@ -344,7 +373,6 @@ var InventoryContainer = function (_React$Component) {
 
 							//if the element is found
 							if (slotElement != undefined) {
-
 								this.didSplit = true;
 								//duplicate the element
 								var newElement = JSON.parse(JSON.stringify(slotElement));
@@ -388,7 +416,7 @@ var InventoryContainer = function (_React$Component) {
 									//callback after render, set the new item to be dragged and set fromslot
 									var ele = inv[inv.length - 1];
 									var slotId = getSlotIdFromNum(ele.slot - 1, invName);
-									var newItem = $("#" + CSS.escape(slotId)).find(".item");
+									var newItem = $("#" + slotId).find(".item");
 									this.dragItem = newItem;
 									this.fromSlot = newItem.parent();
 									this.startDragging(mouseX, mouseY);
@@ -404,11 +432,36 @@ var InventoryContainer = function (_React$Component) {
 	}, {
 		key: "clickSlot",
 		value: function clickSlot(e, slotId) {
-			var slot = $("#" + CSS.escape(slotId));
+			var slot = $("#" + slotId);
 			if (this.isDragging) {
 				//set toSlot
 				this.toSlot = slot;
 			}
+		}
+	}, {
+		key: "clickAmount",
+		value: function clickAmount(e) {
+			e = e || window.event;
+			e.preventDefault();
+		}
+	}, {
+		key: "changeAmount",
+		value: function changeAmount(e) {
+			var value = $("#amount").val();
+			if (value == "") {
+				$("#amount").val(0);
+			}
+		}
+	}, {
+		key: "amountMouseEnter",
+		value: function amountMouseEnter(e) {
+			this.isOverAmount = true;
+		}
+	}, {
+		key: "amountMouseLeave",
+		value: function amountMouseLeave(e) {
+			this.isOverAmount = false;
+			this.amountEdit = "";
 		}
 	}, {
 		key: "stopDragging",
@@ -583,20 +636,21 @@ var Inventory = function (_React$Component2) {
 			var inventoryClasses = "inventory " + invName;
 			var slots = [];
 			var slot = 0;
+			var itemsPerRow = this.props.itemsPerRow;
 
-			var invRows = invSize / 5;
+			var invRows = invSize / itemsPerRow;
 
 			//Load inventory items
 			var items = this.props.items;
 
 			for (var i = 0; i < invRows; i++) {
 				var cols = [];
-				for (var j = 0; j < 5; j++) {
-					var slotId = invName + "slot[" + i + "][" + j + "]";
+				for (var j = 0; j < itemsPerRow; j++) {
+					var slotId = invName + "slot" + (i * itemsPerRow + j);
 
 					var uid, itemValues;
 					if (items != undefined && items.length != 0) {
-						uid = invName + "item[" + i + "][" + j + "]";
+						uid = invName + "item" + (i * itemsPerRow + j);
 						itemValues = items.find(function (e) {
 							return e.slot == slot + 1;
 						});
@@ -732,18 +786,25 @@ var Item = function (_React$Component3) {
 			var itemAmount = this.props.itemValues.amount;
 			var itemImage = this.props.itemValues.image;
 
+			var imgSrc = "img/" + itemName + ".gif";
+
 			return React.createElement(
 				"div",
 				{ className: "item", id: uid, "data-itemid": itemId, onMouseDown: this.clickHandler, onMouseEnter: this.mouseEnterHandler, onMouseLeave: this.mouseOutHandler },
 				React.createElement(
-					"span",
-					{ className: "item-name" },
-					itemName
-				),
-				React.createElement(
 					"div",
 					{ className: "item-amount" },
 					itemAmount
+				),
+				React.createElement(
+					"div",
+					{ className: "item-image" },
+					React.createElement("img", { src: imgSrc })
+				),
+				React.createElement(
+					"div",
+					{ className: "item-name" },
+					itemName
 				)
 			);
 		}
@@ -796,19 +857,15 @@ function Capitalize(str) {
 }
 
 function getSlotNumFromId(id) {
-	var splitId = id.split("[");
-	var rowNum = Number(splitId[1].charAt(0));
-	var colNum = Number(splitId[2].charAt(0));
-	return rowNum * 5 + colNum;
+	var slots = Number(id.replace(/\D/g, ""));
+	return slots;
 }
 
 function getSlotIdFromNum(num, invName) {
 	if (num == null) {
 		return null;
 	}
-	var cols = num % 5;
-	var rows = Math.floor(num / 5);
-	return invName + "slot[" + rows + "][" + cols + "]";
+	return invName + "slot" + num;
 }
 
 function findFirstInstanceOf(itemid, inv) {

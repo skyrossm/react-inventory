@@ -18,17 +18,22 @@ class InventoryContainer extends React.Component {
 		//Bind click handlers
 		this.clickItem = this.clickItem.bind(this);
 		this.clickSlot = this.clickSlot.bind(this);
+		this.amountMouseEnter = this.amountMouseEnter.bind(this);
+		this.amountMouseLeave = this.amountMouseLeave.bind(this);
 
 		this.stopDragging = this.stopDragging.bind(this);
 		this.startDragging = this.startDragging.bind(this);
 
-		//Handle dragging
+		//Handle variables
 		this.isDragging = false;
 		this.dragItem = null;
 		this.toSlot = null;
 		this.fromSlot = null;
 		this.shiftPressed = false;
 		this.didSplit = false;
+		this.ctrlPressed = false;
+		this.isOverAmount = false;
+		this.amountEdit = "";
   	}
 
   	render() {
@@ -39,6 +44,8 @@ class InventoryContainer extends React.Component {
 		let playerItems = this.state.playerinv;
 		let otherItems = this.state.otherinv;
 
+		let rowItems = 5;
+
 		//Child Components
   		var player;
   		var other;
@@ -46,17 +53,17 @@ class InventoryContainer extends React.Component {
   		
   		if(guiOpen){
 			//Create child components
-			if(playerInvSize >= 5){
-				player = <Inventory invName="player" invSize={playerInvSize} items={playerItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
+			if(playerInvSize >= rowItems){
+				player = <Inventory invName="player" invSize={playerInvSize} itemsPerRow={rowItems} items={playerItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
 			}else {
 				player = null;
 			}
-			if(otherInvSize >= 5){
-				other = <Inventory invName="other" invSize={otherInvSize} items={otherItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
+			if(otherInvSize >= rowItems){
+				other = <Inventory invName="other" invSize={otherInvSize} itemsPerRow={rowItems} items={otherItems} clickItem={this.clickItem} clickSlot={this.clickSlot}/>;
 			}else {
 				other = null;
 			}
-			classes = "container";
+			classes = "overlay";
   		}else {
   			//Hide child components/remove them
   			player = null;
@@ -65,12 +72,17 @@ class InventoryContainer extends React.Component {
   		}
 		return(
 			<div className={classes}>
-				{player}
-				{other}
-				<div id="desc">
-					<div className="desc-title"></div>
-					<hr className="divider" />
-					<span className="desc-content"></span>
+				<div className="container">
+					{player}
+					<div id="functions">
+						<input type="number" placeholder="Amount" id="amount" min="0" onMouseEnter={this.amountMouseEnter} onMouseLeave={this.amountMouseLeave} onChange={this.changeAmount} onClick={this.clickAmount} />
+					</div>
+					{other}
+					<div id="desc">
+						<div className="desc-title"></div>
+						<hr className="divider" />
+						<span className="desc-content"></span>
+					</div>
 				</div>
 			</div>
 		);
@@ -119,11 +131,27 @@ class InventoryContainer extends React.Component {
 		if(e.key === "Shift") {
 			this.shiftPressed = false;
 		}
+		if (e.key === "Ctrl") {
+			this.ctrlPressed = false;
+		}
 	}
 	handleKeyDown(e) {
 		//For shift clicking items
 		if (e.key === "Shift") {
 			this.shiftPressed = true;
+		}
+		if (e.key === "Ctrl") {
+			this.ctrlPressed = true;
+		}
+		if (this.isOverAmount) {
+			if (event.keyCode >= 48 && event.keyCode <= 57) {
+				this.amountEdit += e.key.toString();
+    			$("#amount").val(this.amountEdit);
+			} else {
+				this.amountEdit = "0";
+    			$("#amount").val(this.amountEdit);
+			}
+			
 		}
 	}
 
@@ -145,6 +173,7 @@ class InventoryContainer extends React.Component {
 					this.stopDragging();
 			 		break;
 			 	case 3:
+			 		/* REMOVED FOR TIME BEING, IT'S BAD
 			 		//Place one item unless amount = 1
 					let item = this.dragItem;
 					if(Number(item.find(".item-amount").text()) <= 1){
@@ -203,11 +232,12 @@ class InventoryContainer extends React.Component {
 								slotElement.slot = slot;
 								slotElement.amount = 1;
 								fSlotElement.amount -= 1;
+								frominv.push(fSlotElement);
 							}
 							//this.toSlot.find(".item-amount").text(slotElement.amount);
 							//this.fromSlot.find(".item-amount").text(fSlotElement.amount);
 							
-							frominv.push(fSlotElement);
+							
 							toinv.push(slotElement);
 
 							var updateArray = {};
@@ -233,6 +263,7 @@ class InventoryContainer extends React.Component {
 						}
 
 					}
+					*/
 			 		break;
 			 	default: console.log("oops"); break;
 			 }
@@ -242,7 +273,7 @@ class InventoryContainer extends React.Component {
 	clickItem(e, uid, invName) {
 		//Handle when a user clicks on an item
 		if(!this.isDragging){
-			var item = $("#" + CSS.escape(uid));
+			var item = $("#" + uid);
 			let mouseX = e.clientX;
 			let mouseY = e.clientY;
 			switch(e.button){
@@ -277,7 +308,9 @@ class InventoryContainer extends React.Component {
 
 						//make sure inventory is not full
 						if(slot != null){
-							this.toSlot = $("#" + CSS.escape(slot));
+							this.toSlot = $("#" + slot);
+							//prevent sticky shift
+							this.shiftPressed = false;
 							this.stopDragging();
 						}	
 					}else {
@@ -316,7 +349,6 @@ class InventoryContainer extends React.Component {
 
 						//if the element is found
 						if(slotElement != undefined){
-
 							this.didSplit = true;
 							//duplicate the element
 							var newElement = JSON.parse(JSON.stringify(slotElement));
@@ -361,7 +393,7 @@ class InventoryContainer extends React.Component {
 								//callback after render, set the new item to be dragged and set fromslot
 								var ele = inv[inv.length-1];
 								var slotId = getSlotIdFromNum(ele.slot-1, invName);
-								var newItem = $("#" + CSS.escape(slotId)).find(".item");
+								var newItem = $("#" + slotId).find(".item");
 								this.dragItem = newItem;
 								this.fromSlot = newItem.parent();
 								this.startDragging(mouseX, mouseY);
@@ -377,11 +409,32 @@ class InventoryContainer extends React.Component {
 	}
 
 	clickSlot(e, slotId) {
-		var slot =  $("#" + CSS.escape(slotId));
+		var slot =  $("#" + slotId);
 		if(this.isDragging){
 			//set toSlot
 			this.toSlot = slot;
 		}
+	}
+
+	clickAmount(e) {
+		e = e || window.event;
+		e.preventDefault();
+	}
+
+	changeAmount(e) {
+		var value = $("#amount").val();
+		if (value == "") {
+			$("#amount").val(0);
+		}
+	}
+
+	amountMouseEnter(e) {
+		this.isOverAmount = true;
+	}
+
+	amountMouseLeave(e) {
+		this.isOverAmount = false;
+		this.amountEdit = "";
 	}
 
 	stopDragging() {
@@ -543,20 +596,21 @@ class Inventory extends React.Component {
   		const inventoryClasses = "inventory " + invName;
 		let slots = [];
 		let slot = 0;
+		let itemsPerRow = this.props.itemsPerRow;
 
-		let invRows = invSize / 5;
+		let invRows = invSize / itemsPerRow;
 
 		//Load inventory items
 		let items = this.props.items;
 
 		for (let i = 0; i < invRows; i++) {
       		let cols = []
-      		for (let j = 0; j < 5; j++) {
-      			let slotId = invName + "slot["+i+"]["+j+"]";
+      		for (let j = 0; j < itemsPerRow; j++) {
+      			let slotId = invName + "slot" + ((i * itemsPerRow) + j);
 
 				var uid, itemValues;
 				if(items != undefined && items.length != 0){
-					uid = invName + "item["+i+"]["+j+"]";
+					uid = invName + "item" + ((i * itemsPerRow) + j);
 					itemValues = items.find(function(e){
 						return e.slot == slot+1;
 					});
@@ -648,10 +702,13 @@ class Item extends React.Component {
 		let itemAmount = this.props.itemValues.amount;
 		let itemImage = this.props.itemValues.image;
 
+		let imgSrc = "img/" + itemName +".gif";
+
   		return (
   			<div className="item" id={uid} data-itemid={itemId} onMouseDown={this.clickHandler} onMouseEnter={this.mouseEnterHandler} onMouseLeave={this.mouseOutHandler}>
-				<span className="item-name">{itemName}</span>
-				<div className="item-amount">{itemAmount}</div>
+  				<div className="item-amount">{itemAmount}</div>
+  				<div className="item-image"><img src={imgSrc} /></div>
+				<div className="item-name">{itemName}</div>
   			</div>
   		);
   	}
@@ -700,19 +757,15 @@ function Capitalize(str){
 }
 
 function getSlotNumFromId(id) {
-	let splitId =  id.split("[");
-	let rowNum = Number(splitId[1].charAt(0));
-	let colNum = Number(splitId[2].charAt(0));
-	return (rowNum * 5) + colNum;
+	let slots = Number(id.replace(/\D/g, ""));
+	return slots;
 }
 
 function getSlotIdFromNum(num, invName) {
 	if(num == null){
 		return null
 	}
-	var cols = num % 5;
-	var rows = Math.floor(num / 5);
-	return invName + "slot["+rows+"]["+ cols +"]";
+	return invName + "slot" + num;
 }
 
 function findFirstInstanceOf(itemid, inv) {
